@@ -15,8 +15,15 @@ export class SearchWebviewProvider implements vscode.WebviewViewProvider {
         webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
         // 接收来自 Webview 的消息
-        webviewView.webview.onDidReceiveMessage(data => {
-            if (data.command !== 'search') {
+        webviewView.webview.onDidReceiveMessage(this._processSearchInput);
+    }
+
+    private _getHtmlForWebview(_webview: vscode.Webview): string {
+        return fs.readFileSync(path.join(this._extensionUri.fsPath, '\\src\\html\\SearchWebview.html'), 'utf8');
+    }
+
+    private _processSearchInput(data: any){
+        if (data.command !== 'search') {
                 return;
             }
 
@@ -55,10 +62,5 @@ export class SearchWebviewProvider implements vscode.WebviewViewProvider {
             }
 
             this.onSearch(searchData);
-        });
-    }
-
-    private _getHtmlForWebview(webview: vscode.Webview): string {
-        return fs.readFileSync(path.join(this._extensionUri.fsPath, '\\src\\html\\SearchWebview.html'), 'utf8');
     }
 }

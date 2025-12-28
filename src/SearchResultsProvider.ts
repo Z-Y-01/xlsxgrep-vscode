@@ -25,13 +25,13 @@ export class SearchResultsProvider implements vscode.TreeDataProvider<ISearchRes
         return treeItem;
     }
 
-    getChildren(element?: ISearchResult): Thenable<ISearchResult[]> {
+    getChildren(_element?: ISearchResult): Thenable<ISearchResult[]> {
         return Promise.resolve(this.results);
     }
 
     
-    public async runSearch(data: ISearchData){
-        const {targetVal, isCaseMatch, isWholeMatch, bOnlyActiveFiles} = data;
+    async runSearch(data: ISearchData){
+        const {targetVal} = data;
         const startOutput = `Start Searching for: ${targetVal}...`;
         vscode.window.showInformationMessage(startOutput);
         console.log(startOutput);
@@ -50,7 +50,7 @@ export class SearchResultsProvider implements vscode.TreeDataProvider<ISearchRes
         // 2. 执行核心搜索
          vscode.window.withProgress({
             location: { viewId: SearchResultsProvider.viewType },
-            title: "XLSXgrep: Searching...",
+            title: "XLSXGrep: Searching...",
             cancellable: true,
         }, async (_, token) => {
             for(const uri of uris){
@@ -132,7 +132,6 @@ export class SearchResultsProvider implements vscode.TreeDataProvider<ISearchRes
 
     private _checkMatch(cellValue: string, data: ISearchData): boolean {
         let {targetVal, isCaseMatch, isWholeMatch, TargetRegexExp} = data;
-
         if (TargetRegexExp) {
             return TargetRegexExp.test(cellValue);
         }
@@ -144,11 +143,7 @@ export class SearchResultsProvider implements vscode.TreeDataProvider<ISearchRes
         }
 
         // 处理全字匹配 || 包含匹配
-        if (isWholeMatch) {
-            return cellValue === targetVal;
-        } else {
-            return cellValue.includes(targetVal);
-        }
+        return isWholeMatch ? cellValue === targetVal : cellValue.includes(targetVal);
     }
 
     private _indexToColName(index: number): string {
@@ -157,6 +152,7 @@ export class SearchResultsProvider implements vscode.TreeDataProvider<ISearchRes
             name = String.fromCharCode((index % 26) + 65) + name;
             index = Math.floor(index / 26) - 1;
         }
+
         return name;
     }
 
