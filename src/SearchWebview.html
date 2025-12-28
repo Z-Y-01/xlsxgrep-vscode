@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { padding: 10px; display: flex; flex-direction: column; gap: 10px; font-family: var(--vscode-font-family); color: var(--vscode-foreground); }
+        input[type="text"] { width: 100%; padding: 5px; background: var(--vscode-input-background); color: var(--vscode-input-foreground); border: 1px solid var(--vscode-input-border); box-sizing: border-box; }
+        
+        /* 复选框容器样式 */
+        .checkbox-container { display: flex; align-items: center; gap: 5px; cursor: pointer; font-size: 12px; }
+        .checkbox-container input { cursor: pointer; margin: 0; }
+        
+        button { cursor: pointer; background: var(--vscode-button-background); color: var(--vscode-button-foreground); border: none; padding: 6px; width: 100%; }
+        button:hover { background: var(--vscode-button-hoverBackground); }
+    </style>
+</head>
+<body>
+    <input type="text" id="searchInput" placeholder="Search in Excel files..." />
+
+    <label class="checkbox-container">
+        <input type="checkbox" id="WholeMatchCellCheckbox" />
+        Whole Word Match 全字匹配
+    </label>
+
+    <label class="checkbox-container">
+        <input type="checkbox" id="CaseMatchCellCheckbox" />
+        Case Sensitivity 大小写匹配
+    </label>
+
+    <button id="searchBtn">Search</button>
+
+    <script>
+        const vscode = acquireVsCodeApi();
+        const searchBtn = document.getElementById('searchBtn');
+        const searchInput = document.getElementById('searchInput');
+        const WholeMatchCellCheckbox = document.getElementById('WholeMatchCellCheckbox');
+        const CaseMatchCellCheckbox = document.getElementById('CaseMatchCellCheckbox')
+        searchBtn.addEventListener('click', () => {
+            const val = searchInput.value;
+            const isWholeExactMatch = WholeMatchCellCheckbox?.checked ?? false ; // 获取复选框状态
+            const isCaseExactMatch = CaseMatchCellCheckbox?.checked ?? false; // 获取复选框状态
+            
+            vscode.postMessage({ 
+                command: 'search', 
+                text: val,
+                isWholeExactMatch: isWholeExactMatch,
+                isCaseExactMatch: isCaseExactMatch,
+            });
+        });
+
+        // 支持回车搜索
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') searchBtn.click();
+        });
+    </script>
+</body>
+</html>
