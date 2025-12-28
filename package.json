@@ -16,7 +16,7 @@
       "activitybar": [
         {
           "id": "xlsxgrep",
-          "title": "XLSXgrep FOR VSCODE",
+          "title": "XLSXGrep FOR VSCODE",
           "icon": "resources/icon.svg"
         }
       ]
