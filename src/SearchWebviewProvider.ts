@@ -1,11 +1,12 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import { ISearchData } from './Interfaces';
 
 export class SearchWebviewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'xlsxgrep.searchView';
 
-    constructor(private readonly _extensionUri: vscode.Uri) {}
+    constructor(private readonly _extensionUri: vscode.Uri, private readonly _onSearch: (data: ISearchData) => void) {}
 
     resolveWebviewView(webviewView: vscode.WebviewView) {
         webviewView.webview.options = { enableScripts: true };
@@ -19,15 +20,17 @@ export class SearchWebviewProvider implements vscode.WebviewViewProvider {
                 return;
             }
 
-            const searchValue = data.text;
-            const isWholeMatch = data.isWholeExactMatch;
-            const isCaseMatch = data.isCaseExactMatch;
-            const  output: string = `Searching for: ${searchValue}, isWholeExactMatch: ${isWholeMatch}, isCaseExactMatch: ${isCaseMatch}`;
-            vscode.window.showInformationMessage(output);
+            this._onSearch(
+                {
+                    targetVal: data.text ?? "",
+                    isWholeMatch: data.isWholeExactMatch ?? false,
+                    isCaseMatch: data.isCaseExactMatch ?? false,
+                }
+            );
         });
     }
 
     private _getHtmlForWebview(webview: vscode.Webview): string {
-        return fs.readFileSync(path.join(this._extensionUri.fsPath, '\\src\\SearchWebview.html'), 'utf8');
+        return fs.readFileSync(path.join(this._extensionUri.fsPath, '\\src\\html\\SearchWebview.html'), 'utf8');
     }
 }

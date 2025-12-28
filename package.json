@@ -27,8 +27,12 @@
         {
           "type": "webview",
           "id": "xlsxgrep.searchView",
-          "name": "XLSX Search for VSCode",
-          "icon": "resources/icon.svg"
+          "name": "XLSX Search for VSCode"
+        },
+        {
+          "type": "tree",
+          "id": "xlsxgrep.resultsView",
+          "name": "Result"
         }
       ]
     },

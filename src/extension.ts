@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { SearchWebviewProvider } from './SearchWebviewProvider';
+import { ISearchData } from './Interfaces';
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('xlsxgrep extension is now active');
@@ -11,17 +12,19 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(openSearchCmd);
 
     // 注册 Webview 视图
-	const WebviewProvider = new SearchWebviewProvider(context.extensionUri);
+	const WebviewProvider = new SearchWebviewProvider(context.extensionUri, (data: ISearchData) => _onSearch(data));
     context.subscriptions.push(
         vscode.window.registerWebviewViewProvider(SearchWebviewProvider.viewType, WebviewProvider)
     );
-
-	const disposable = vscode.commands.registerCommand('xlsxgrep-vscode.helloWorld', () => {
-		vscode.window.showInformationMessage('Hello World from xlsxgrep-vscode!');
-	});
-	context.subscriptions.push(disposable);
 }
 
 export function deactivate() {
 	console.log('xlsxgrep extension is deactive');
+}
+
+export function _onSearch(data: ISearchData){
+	const {targetVal, isCaseMatch, isWholeMatch} = data;
+	const startOutput = `Searching for: ${targetVal}, isWholeExactMatch: ${isWholeMatch}, isCaseExactMatch: ${isCaseMatch}`;
+    vscode.window.showInformationMessage(startOutput);
+	console.log(startOutput);
 }
