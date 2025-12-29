@@ -2,41 +2,54 @@ import * as vscode from 'vscode';
 import * as xlsx from 'xlsx';
 import * as path from "path";
 import { ISearchResult, ISearchData } from './Interfaces';
+import {SearchResultBookItem, SearchResultCellItem } from './SearchResultItem';
 
-export class SearchResultsProvider implements vscode.TreeDataProvider<ISearchResult> {
+type SearchResultTreeItem = SearchResultBookItem | SearchResultCellItem;
+
+export class SearchResultsProvider implements vscode.TreeDataProvider<SearchResultTreeItem> {
     public static readonly viewType = 'xlsxgrep.resultsView';
-    private _onDidChangeTreeData: vscode.EventEmitter<ISearchResult | undefined | null | void> = new vscode.EventEmitter<ISearchResult | undefined | null | void>();
-    readonly onDidChangeTreeData: vscode.Event<ISearchResult | undefined | null | void> = this._onDidChangeTreeData.event;
+    private _onDidChangeTreeData: vscode.EventEmitter<SearchResultTreeItem | undefined | null | void> = new vscode.EventEmitter<SearchResultTreeItem | undefined | null | void>();
+    readonly onDidChangeTreeData: vscode.Event<SearchResultTreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
-    private results: ISearchResult[] = [];
+    private filePathToResults: Map<string, ISearchResult[]> = new Map();
 
-    public getTreeItem(element: ISearchResult): vscode.TreeItem {
-        const treeItem = new vscode.TreeItem(element.cellContent); // 单元格内容作为标题
-        treeItem.description = `FILE: ${element.fileName}, SHEET: ${element.sheet}, ROW: ${element.row}, COL: ${element.col}`;
-        treeItem.tooltip = `Click to open ${element.fileName}.`;
-        treeItem.iconPath = new vscode.ThemeIcon('table');
-        
-        // 如果想要点击跳转
-        treeItem.command = {
-            command: 'vscode.open',
-            title: 'Open File',
-            arguments: [vscode.Uri.file(element.path)]
-        };
-        return treeItem;
+    public getTreeItem(element: SearchResultTreeItem): vscode.TreeItem {
+        return element;
     }
 
-    public getChildren(_element?: ISearchResult): Thenable<ISearchResult[]> {
-        return Promise.resolve(this.results);
+    public getChildren(element?: SearchResultTreeItem): vscode.ProviderResult<SearchResultTreeItem[]> {
+        if (!element) {
+            // 返回所有文件节点
+            const files: SearchResultBookItem[] = [];
+            this.filePathToResults.forEach((results, filePath) => {
+                if (results.length > 0) {
+                    files.push(new SearchResultBookItem(path.basename(filePath), filePath, results));
+                }
+            });
+
+            return files;
+        }
+
+        if (element instanceof SearchResultBookItem) {
+            const results = this.filePathToResults.get(element.path);
+            if(!results)
+            {
+                return [];
+            }
+
+            return results.map((v)=> new SearchResultCellItem(v));
+        }
+
+        return [];
     }
 
-    
     public async runSearch(data: ISearchData){
         const {targetVal} = data;
         const startOutput = `Start Searching for: ${targetVal}...`;
         vscode.window.showInformationMessage(startOutput);
         console.log(startOutput);
 
-        this.results = []; // 清空上一次搜索结果
+        this.filePathToResults.clear(); // 清空上一次搜索结果
         this._onDidChangeTreeData.fire();
         
         // 1. 确定搜索范围
@@ -58,14 +71,14 @@ export class SearchResultsProvider implements vscode.TreeDataProvider<ISearchRes
                     break; 
                 }
 
-                this.results.push(...this._searchInExcelFile(uri.fsPath, data));
+                this.filePathToResults.set(uri.fsPath, this._searchInExcelFile(uri.fsPath, data));
             }
         });
 
         // 3. 通知 UI 刷新
         this._onDidChangeTreeData.fire();
 
-        let endOutput = `Search complete, found ${this.results.length} matches.`;
+        let endOutput = `Search complete, found ${this.filePathToResults.values()} matches.`;
         vscode.window.showInformationMessage(endOutput);
         console.log(endOutput);
     }
@@ -115,7 +128,8 @@ export class SearchResultsProvider implements vscode.TreeDataProvider<ISearchRes
                                 sheet: sheetName,
                                 row: r + 1, // Excel 行号从 1 开始
                                 col: this._indexToColName(c), // 转换索引为 A, B, C...
-                                cellContent: cellValue
+                                cellContent: cellValue,
+                                rowContent: String(rows[r]),
                             });
                         }
                     }

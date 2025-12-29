@@ -8,10 +8,11 @@ export interface ISearchData {
 }
 
 export interface ISearchResult {
+    path: string;
     fileName: string;
     sheet: string;
     row: number;
     col: string;
     cellContent: string;
-    path: string;
+    rowContent: string;
 }

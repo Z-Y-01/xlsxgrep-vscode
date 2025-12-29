@@ -6,7 +6,7 @@ import { ISearchData } from './Interfaces';
 export class SearchWebviewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'xlsxgrep.searchView';
 
-    constructor(private readonly _extensionUri: vscode.Uri, private readonly onSearch: (data: ISearchData) => void) {}
+    constructor(private readonly _extensionUri: vscode.Uri, private readonly _onSearch: (data: ISearchData) => void) {}
 
     public resolveWebviewView(webviewView: vscode.WebviewView) {
         webviewView.webview.options = { enableScripts: true };
@@ -15,7 +15,7 @@ export class SearchWebviewProvider implements vscode.WebviewViewProvider {
         webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
         // 接收来自 Webview 的消息
-        webviewView.webview.onDidReceiveMessage(this._processSearchInput);
+        webviewView.webview.onDidReceiveMessage((data: any) => this._processSearchInput(data));
     }
 
     private _getHtmlForWebview(_webview: vscode.Webview): string {
@@ -61,6 +61,6 @@ export class SearchWebviewProvider implements vscode.WebviewViewProvider {
                 }
             }
 
-            this.onSearch(searchData);
+            this._onSearch(searchData);
     }
 }
