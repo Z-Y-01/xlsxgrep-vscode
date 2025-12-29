@@ -10,7 +10,7 @@ export class SearchResultsProvider implements vscode.TreeDataProvider<ISearchRes
 
     private results: ISearchResult[] = [];
 
-    getTreeItem(element: ISearchResult): vscode.TreeItem {
+    public getTreeItem(element: ISearchResult): vscode.TreeItem {
         const treeItem = new vscode.TreeItem(element.cellContent); // 单元格内容作为标题
         treeItem.description = `FILE: ${element.fileName}, SHEET: ${element.sheet}, ROW: ${element.row}, COL: ${element.col}`;
         treeItem.tooltip = `Click to open ${element.fileName}.`;
@@ -25,12 +25,12 @@ export class SearchResultsProvider implements vscode.TreeDataProvider<ISearchRes
         return treeItem;
     }
 
-    getChildren(_element?: ISearchResult): Thenable<ISearchResult[]> {
+    public getChildren(_element?: ISearchResult): Thenable<ISearchResult[]> {
         return Promise.resolve(this.results);
     }
 
     
-    async runSearch(data: ISearchData){
+    public async runSearch(data: ISearchData){
         const {targetVal} = data;
         const startOutput = `Start Searching for: ${targetVal}...`;
         vscode.window.showInformationMessage(startOutput);

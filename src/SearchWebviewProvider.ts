@@ -8,7 +8,7 @@ export class SearchWebviewProvider implements vscode.WebviewViewProvider {
 
     constructor(private readonly _extensionUri: vscode.Uri, private readonly onSearch: (data: ISearchData) => void) {}
 
-    resolveWebviewView(webviewView: vscode.WebviewView) {
+    public resolveWebviewView(webviewView: vscode.WebviewView) {
         webviewView.webview.options = { enableScripts: true };
 
         // 设置 HTML 内容
