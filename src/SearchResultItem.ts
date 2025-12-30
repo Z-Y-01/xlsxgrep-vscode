@@ -8,7 +8,7 @@ export class SearchResultBookItem extends vscode.TreeItem {
     ) {
         super(fileName, vscode.TreeItemCollapsibleState.Expanded);
         this.resourceUri = vscode.Uri.file(filePath); 
-        this.description = ` ${filePath}`;
+        this.description = ` ${this.resourceUri.fsPath}`;
         this.iconPath = new vscode.ThemeIcon('files');
     }
 }
@@ -29,7 +29,7 @@ export class SearchResultCellItem extends vscode.TreeItem {
     constructor(public readonly result: ISearchResult) {
         super(result.cellContent, vscode.TreeItemCollapsibleState.None);
         this.description = ` Row: ${result.row}, Col: ${result.col}, RowContent: ${result.rowContent}`;
-        this.tooltip = ` Click to open ${result.fileName}.`;
+        this.tooltip = ` Click to open ${result.fileName}. Row: ${result.row}, Col: ${result.col}, RowContent: ${result.rowContent}`;
         this.iconPath = new vscode.ThemeIcon('symbol-field');
         
         // 点击子节点打开文件
