@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as xlsx from "xlsx";
 import * as path from "path";
-import { ISearchResult, ISearchData } from "./Interfaces";
+import { ISearchData } from "./Interfaces";
 import {
     SearchResultBookItem,
     SearchResultCellItem,
@@ -27,6 +27,8 @@ export class SearchResultsProvider
     > = this._onDidChangeTreeData.event;
 
     private matchCount: number = 0;
+    private books: SearchResultBookItem[] = [];
+
     public getTreeItem(element: SearchResultTreeItem): vscode.TreeItem {
         return element;
     }
@@ -34,6 +36,10 @@ export class SearchResultsProvider
     public getChildren(
         element?: SearchResultTreeItem
     ): vscode.ProviderResult<SearchResultTreeItem[]> {
+        if (!element) {
+            return this.books;
+        }
+
         if (element instanceof SearchResultBookItem) {
             return element.sheetItems;
         }
@@ -47,7 +53,7 @@ export class SearchResultsProvider
 
     public async runSearch(data: ISearchData) {
         const { targetVal } = data;
-        const startOutput = `Start Searching for: ${targetVal}...`;
+        const startOutput = `Start Searching for ${targetVal} ...`;
         vscode.window.showInformationMessage(startOutput);
         console.log(startOutput);
 
@@ -127,15 +133,17 @@ export class SearchResultsProvider
         try {
             const workbook = xlsx.readFile(filePath);
             const fileName = path.basename(filePath);
-            const bookItem = new SearchResultBookItem(fileName, filePath, []);
+            const sheetItems: SearchResultSheetItem[] = [];
             for (const sheetName of workbook.SheetNames) {
-                const sheet = workbook.Sheets[sheetName];
                 const cellItems: SearchResultCellItem[] = [];
                 // 将表格转为二维数组，{header: 1} 确保能拿到所有单元格
-                const rows: any[][] = xlsx.utils.sheet_to_json(sheet, {
-                    header: 1,
-                    defval: "",
-                });
+                const rows: any[][] = xlsx.utils.sheet_to_json(
+                    workbook.Sheets[sheetName],
+                    {
+                        header: 1,
+                        defval: "",
+                    }
+                );
                 for (let r = 0; r < rows.length; r++) {
                     for (let c = 0; c < rows[r].length; c++) {
                         const cellValue = String(rows[r][c]);
@@ -163,12 +171,14 @@ export class SearchResultsProvider
                         filePath,
                         cellItems
                     );
-                    bookItem.sheetItems.push(sheetItem);
+                    sheetItems.push(sheetItem);
                 }
             }
 
-            if (bookItem.sheetItems.length > 0) {
-                this._onDidChangeTreeData.fire(bookItem);
+            if (sheetItems.length > 0) {
+                this.books.push(
+                    new SearchResultBookItem(fileName, filePath, sheetItems)
+                );
             }
         } catch (e) {
             const errorOutput = `Unable to read file: ${filePath}. `;
