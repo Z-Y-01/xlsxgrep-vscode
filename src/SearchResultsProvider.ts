@@ -13,9 +13,7 @@ type SearchResultTreeItem =
     | SearchResultCellItem
     | SearchResultSheetItem;
 
-export class SearchResultsProvider
-    implements vscode.TreeDataProvider<SearchResultTreeItem>
-{
+export class SearchResultsProvider implements vscode.TreeDataProvider<SearchResultTreeItem> {
     public static readonly viewType = "xlsxgrep.resultsView";
     private _onDidChangeTreeData: vscode.EventEmitter<
         SearchResultTreeItem | undefined | null | void
@@ -34,7 +32,7 @@ export class SearchResultsProvider
     }
 
     public getChildren(
-        element?: SearchResultTreeItem
+        element?: SearchResultTreeItem,
     ): vscode.ProviderResult<SearchResultTreeItem[]> {
         if (!element) {
             return this.books;
@@ -58,13 +56,14 @@ export class SearchResultsProvider
         console.log(startOutput);
 
         this.matchCount = 0; // 清空上一次搜索结果
+        this.books = [];
         this._onDidChangeTreeData.fire();
 
         // 1. 确定搜索范围
         let uris: vscode.Uri[] | undefined = await this._getSearchUris(data);
         if (uris === undefined || uris.length <= 0) {
             vscode.window.showWarningMessage(
-                "Please check if there is a .xlsx file in the current workspace."
+                "Please check if there is a .xlsx file in the current workspace.",
             );
             return;
         }
@@ -84,7 +83,7 @@ export class SearchResultsProvider
 
                     this._processSearchInExcelFile(uri.fsPath, data);
                 }
-            }
+            },
         );
 
         // 3. 通知 UI 刷新
@@ -101,7 +100,7 @@ export class SearchResultsProvider
             filePattern !== undefined && filePattern.length > 0;
         if (!data.bOnlyActiveFiles) {
             return await vscode.workspace.findFiles(
-                bCheckFilePattern ? `**/*${filePattern}*.xlsx` : "**/*.xlsx"
+                bCheckFilePattern ? `**/*${filePattern}*.xlsx` : "**/*.xlsx",
             );
         }
 
@@ -128,7 +127,7 @@ export class SearchResultsProvider
 
     private _processSearchInExcelFile(
         filePath: string,
-        data: ISearchData
+        data: ISearchData,
     ): void {
         try {
             const workbook = xlsx.readFile(filePath);
@@ -142,7 +141,7 @@ export class SearchResultsProvider
                     {
                         header: 1,
                         defval: "",
-                    }
+                    },
                 );
                 for (let r = 0; r < rows.length; r++) {
                     for (let c = 0; c < rows[r].length; c++) {
@@ -157,7 +156,7 @@ export class SearchResultsProvider
                                     col: this._indexToColName(c), // 转换索引为 A, B, C...
                                     cellContent: cellValue,
                                     rowContent: String(rows[r]),
-                                })
+                                }),
                             );
                             this.matchCount += 1;
                         }
@@ -169,7 +168,7 @@ export class SearchResultsProvider
                         sheetName,
                         cellItems.length,
                         filePath,
-                        cellItems
+                        cellItems,
                     );
                     sheetItems.push(sheetItem);
                 }
@@ -177,7 +176,7 @@ export class SearchResultsProvider
 
             if (sheetItems.length > 0) {
                 this.books.push(
-                    new SearchResultBookItem(fileName, filePath, sheetItems)
+                    new SearchResultBookItem(fileName, filePath, sheetItems),
                 );
             }
         } catch (e) {
@@ -200,9 +199,11 @@ export class SearchResultsProvider
         }
 
         // 处理全字匹配 || 包含匹配
-        return isWholeMatch
-            ? cellValue === targetVal
-            : cellValue.includes(targetVal);
+        if (isWholeMatch) {
+            return cellValue === targetVal;
+        }
+
+        return cellValue.includes(targetVal);
     }
 
     private _indexToColName(index: number): string {
